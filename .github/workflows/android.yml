@@ -2,71 +2,64 @@ name: Build C++ Background Service APK
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [main, master]
   workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
+    env:
+      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
+      ANDROID_HOME: /usr/local/lib/android/sdk
+
     steps:
-      - name: Checkout Repository
+      - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up JDK 11
         uses: actions/setup-java@v4
         with:
           distribution: temurin
-          java-version: "17"
+          java-version: "11"
           cache: gradle
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          api-level: 34
-          build-tools-version: 34.0.0
-          ndk-version: 25.2.9519653
-          cmake-version: 3.22.1
-          accept-android-sdk-licenses: true
 
-      - name: Install required Android SDK components explicitly
+      - name: Install Android SDK packages required by this project
         shell: bash
         run: |
           set -euxo pipefail
-          export ANDROID_SDK_ROOT=/usr/local/lib/android/sdk
+
           export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
 
-          if [ -x "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" ]; then
-            SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
-          elif [ -x "$ANDROID_SDK_ROOT/cmdline-tools/16.0/bin/sdkmanager" ]; then
-            SDKMANAGER="$ANDROID_SDK_ROOT/cmdline-tools/16.0/bin/sdkmanager"
-          else
-            echo "sdkmanager not found"; exit 1
+          # Ensure sdkmanager exists
+          if [ ! -x "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" ]; then
+            echo "sdkmanager not found under cmdline-tools/latest"
+            exit 1
           fi
 
-          yes | "$SDKMANAGER" --licenses || true
-          "$SDKMANAGER" --install \
+          yes | sdkmanager --licenses >/dev/null || true
+          sdkmanager --install \
             "platform-tools" \
-            "platforms;android-34" \
-            "build-tools;34.0.0" \
-            "cmake;3.22.1" \
-            "ndk;25.2.9519653" \
-            --verbose
+            "platforms;android-30" \
+            "build-tools;30.0.3" \
+            "cmake;3.18.1" \
+            "ndk;23.1.7779620" \
+            --sdk_root="$ANDROID_SDK_ROOT"
 
-      - name: Make Gradle executable
+      - name: Make Gradle wrapper executable
         run: chmod +x ./gradlew
 
-      - name: Ensure Gradle wrapper exists
+      - name: Build APK
         shell: bash
         run: |
-          if [ ! -f ./gradlew ]; then
-            ./gradlew wrapper
-          fi
+          set -euxo pipefail
+          ./gradlew assembleRelease --no-daemon --stacktrace
 
-      - name: Build APK with Gradle
-        run: ./gradlew assembleRelease --no-daemon --stacktrace
-
-      - name: Upload APK Artifact
+      - name: Upload APK artifact
+        if: success()
         uses: actions/upload-artifact@v4
         with:
           name: CppBackgroundService-APK
