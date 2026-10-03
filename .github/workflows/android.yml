@@ -21,6 +21,8 @@ jobs:
 
       - name: Setup Android SDK & NDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: 'tools'
 
       - name: Install NDK & CMake
         run: |
