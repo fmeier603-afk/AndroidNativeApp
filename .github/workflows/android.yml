@@ -21,11 +21,12 @@ jobs:
           cache: gradle
 
       - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
+        uses: android-actions/setup-android@v4
         with:
           api-level: 30
           ndk-version: 23.1.7779620
           build-tools-version: 30.0.3
+          sdk-manager-install-packages: 'tools'
 
       - name: Grant execute permission
         run: chmod +x ./gradlew
