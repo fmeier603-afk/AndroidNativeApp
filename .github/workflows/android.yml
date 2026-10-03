@@ -1,4 +1,4 @@
-name: Build C++ Background Service APK
+name: Build C++ APK
 
 on:
   push:
@@ -9,15 +9,11 @@ jobs:
   build:
     runs-on: ubuntu-latest
 
-    env:
-      ANDROID_SDK_ROOT: /usr/local/lib/android/sdk
-      ANDROID_HOME: /usr/local/lib/android/sdk
-
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Setup JDK
         uses: actions/setup-java@v4
         with:
           distribution: temurin
@@ -26,42 +22,20 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          api-level: 30
+          ndk-version: 23.1.7779620
+          build-tools-version: 30.0.3
 
-      - name: Install Android SDK packages required by this project
-        shell: bash
-        run: |
-          set -euxo pipefail
-
-          export PATH="$ANDROID_SDK_ROOT/cmdline-tools/latest/bin:$ANDROID_SDK_ROOT/platform-tools:$PATH"
-
-          # Ensure sdkmanager exists
-          if [ ! -x "$ANDROID_SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" ]; then
-            echo "sdkmanager not found under cmdline-tools/latest"
-            exit 1
-          fi
-
-          yes | sdkmanager --licenses >/dev/null || true
-          sdkmanager --install \
-            "platform-tools" \
-            "platforms;android-30" \
-            "build-tools;30.0.3" \
-            "cmake;3.18.1" \
-            "ndk;23.1.7779620" \
-            --sdk_root="$ANDROID_SDK_ROOT"
-
-      - name: Make Gradle wrapper executable
+      - name: Grant execute permission
         run: chmod +x ./gradlew
 
       - name: Build APK
-        shell: bash
-        run: |
-          set -euxo pipefail
-          ./gradlew assembleRelease --no-daemon --stacktrace
+        run: ./gradlew assembleRelease --no-daemon --stacktrace
 
-      - name: Upload APK artifact
+      - name: Upload APK
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: CppBackgroundService-APK
-          path: app/build/outputs/apk/release/*.apk
-          if-no-files-found: error
+          name: app-release.apk
+          path: app/build/outputs/apk/release/app-release.apk
