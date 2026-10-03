@@ -22,11 +22,19 @@ jobs:
 
       - name: Setup Android SDK
         uses: android-actions/setup-android@v4
-        with:
-          api-level: 30
-          ndk-version: 23.1.7779620
-          build-tools-version: 30.0.3
-          sdk-manager-install-packages: 'tools'
+
+      - name: Install Android SDK packages
+        shell: bash
+        run: |
+          sdkmanager --install "platform-tools" \
+            "platforms;android-30" \
+            "build-tools;30.0.3" \
+            "ndk;23.1.7779620" \
+            "cmake;3.18.1"
+
+      - name: Create local.properties
+        shell: bash
+        run: echo "sdk.dir=$ANDROID_SDK_ROOT" > local.properties
 
       - name: Grant execute permission
         run: chmod +x ./gradlew
