@@ -19,14 +19,12 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Setup Android SDK & NDK
+      - name: Setup Android SDK
         uses: android-actions/setup-android@v3
-        with:
-          packages: 'tools'
 
       - name: Install NDK & CMake
         run: |
-          sdkmanager --install "ndk;25.2.9519653" "cmake;3.22.1"
+          sdkmanager --install "platform-tools" "platforms;android-34" "build-tools;34.0.0" "ndk;25.2.9519653" "cmake;3.22.1"
 
       - name: Make Gradle Executable
         run: chmod +x gradlew || true
