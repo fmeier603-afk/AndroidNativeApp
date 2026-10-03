@@ -23,3 +23,8 @@ android {
         }
     }
 }
+
+dependencies {
+    // Add your dependencies here
+    // Example: implementation 'androidx.appcompat:appcompat:1.6.1'
+}
